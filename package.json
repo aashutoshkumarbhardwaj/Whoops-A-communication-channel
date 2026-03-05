@@ -12,6 +12,10 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "mongosh": "^2.7.0"
+    "cookie-parser": "^1.4.7",
+    "cookieparser": "^0.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongosh": "^2.7.0",
+    "multer": "^2.1.1"
   }
 }

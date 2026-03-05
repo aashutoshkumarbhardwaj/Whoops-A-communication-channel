@@ -52,14 +52,15 @@ userSchema.pre('save', function(next) {
 
 userSchema.statics.matchPassword = async function(email, password) {
     const user = await this.findOne({ email });
-    if (!user) return false;
+    if (!user) throw new Error("Incorrect email or password");
 
     const salt = user.salt;
     const hashedPassword = createHmac('sha256', salt)
     .update(password)
     .digest('hex');
 
-    return user.doc && user.password === hashedPassword;
+    if (user.password !== hashedPassword) throw new Error("Incorrect email or password");
+    return user;
 };
 
 const User = model('User', userSchema);

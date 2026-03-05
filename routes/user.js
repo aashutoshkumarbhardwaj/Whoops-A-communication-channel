@@ -1,30 +1,25 @@
 const {Router} = require('express');
 const User = require("../models/User");
+const { createTokenForUser } = require('../services/authentication');
 const router = Router();
 
 router.get("/signin", (req, res) => {
     res.render("signin", {
         title: "Sign In",
-        user: null   // or req.user later when auth exists
+        user: req.user
     });
 });
 
 router.get("/signup", (req, res) => {
     res.render("signup", {
         title: "Sign Up",
-        user: null   // or req.user later when auth exists
+        user: req.user
     });
-});
-
-router.post("/signin", (req, res) => {
-    // Handle sign in logic here
-    res.send("Sign In POST route");
-    res.redirect("/");
 });
 
 router.post("/signup", async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { name, email, password } = req.body;
 
     // Check if email already exists
     const existingUser = await User.findOne({ email });
@@ -33,9 +28,9 @@ router.post("/signup", async (req, res) => {
       return res.send("Email already registered");
     }
 
-    await User.create({ username, email, password });
+    await User.create({ name, email, password });
 
-    res.send("User created successfully");
+    return res.redirect("/signin");
 
   } catch (err) {
     console.error(err);
@@ -43,15 +38,24 @@ router.post("/signup", async (req, res) => {
   }
 });
 
+
 router.post("/signin", async (req, res) => {
     const { email, password } = req.body;
-
-    const isMatch = await User.matchPassword(email, password);
-    if (!isMatch) {
-        return res.send("Invalid email or password");
+    try {
+        const user = await User.matchPassword(email, password);
+        const token = createTokenForUser(user);
+        return res.cookie("token", token).redirect("/");
+    } catch (error) {
+        return res.render("signin", {
+            title: "Sign In",
+            user: req.user,
+            error: "Invalid email or password"
+        });
     }
-
-    res.send("Sign in successful");
 });
 
-module.exports = router;module.exports = router;
+router.get("/signout", (req, res) => {
+    res.clearCookie("token").redirect("/");
+});
+
+module.exports = router;
