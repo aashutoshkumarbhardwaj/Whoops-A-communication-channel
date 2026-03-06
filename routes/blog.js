@@ -3,6 +3,7 @@ const multer = require("multer");
 const path = require("path");
 
 const Blog = require("../models/blog");
+const Comment = require("../models/comment");
 
 const router = Router();
 
@@ -24,6 +25,36 @@ router.get("/add-new", (req, res) => {
         title: "Add New Blog"
     });
 });
+
+router.get("/:id", async (req, res) => {
+    const blog = await Blog.findById(req.params.id).populate("author");
+    const comments = await Comment.find({ blogId: req.params.id }).populate("author").sort({ createdAt: -1 });
+
+    if (!blog) {
+        return res.status(404).render("404", {
+            user: req.user,
+            title: "Blog Not Found"
+        });
+    }
+    return res.render("blogDetails", {
+        user: req.user,
+        title: blog.title,
+        blog,
+        comments,
+    });
+});
+
+router.post("/comment/:blogId", async (req, res) => {
+
+     await Comment.create({
+        content:req.body.content,
+        blogId:req.params.blogId,
+        author:req.user._id
+    });
+    return res.redirect(`/blog/${req.params.blogId}`);
+});
+
+
 
 router.post("/add-new", upload.single("coverImage"), async (req, res) => {
     const { title, content } = req.body;
